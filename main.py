@@ -1,3 +1,5 @@
+from http.cookiejar import debug
+
 import easytrader
 
 
@@ -18,14 +20,14 @@ def xq():
                        total_assets=100000,
                        initial_assets=None,
                        adjust_sell=True,
-                       track_interval=10,
+                       track_interval=1,
                        trade_cmd_expire_seconds=120000000,
                        cmd_cache=True,
                        slippage=0.01, )
 
 
 def yh():
-    userYh = easytrader.use('yh_client')
+    userYh = easytrader.use('yh_client',debug)
     userYh.prepare('yh_client.json')
     userYh.login()
     return userYh
