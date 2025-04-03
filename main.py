@@ -47,7 +47,7 @@ def xqToThs():
 def yh():
     userYh = easytrader.use('yh_client',debug=True)
     userYh.prepare('yh_client.json')
-    userYh.login()
+    userYh.login(user='用户名', password='雪球、银河客户端为明文密码', exe_path='E:\\双子星新一代行情交易终端\\transaction\\xiadan.exe', comm_password='华泰通讯密码，其他券商不用')
     return userYh
 def ths():
     userThs = easytrader.use('universal_client',debug=True)
@@ -57,7 +57,7 @@ def ths():
 
 
 def main():
-    xqToThs()
+    xqToYh()
 
 
 if __name__ == '__main__':
