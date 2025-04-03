@@ -21,11 +21,14 @@ def xq():
                        track_interval=10,
                        trade_cmd_expire_seconds=120000000,
                        cmd_cache=True,
-                       slippage= 0.01,)
+                       slippage=0.01, )
 
 
 def yh():
-    return easytrader.use('yh')
+    userYh = easytrader.use('yh_client')
+    userYh.prepare('yh_client.json')
+    userYh.login()
+    return userYh
 
 
 def main():

@@ -1,4 +1,5 @@
 {
   "user": "银河用户名",
-  "password": "银河明文密码"
+  "password": "银河明文密码",
+  "exe_path": "E:\\双子星新一代行情交易终端\\bin\\happ.exe"
 }
