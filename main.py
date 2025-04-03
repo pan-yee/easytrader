@@ -15,7 +15,7 @@ def xqToYh():
                        initial_assets=None,
                        adjust_sell=True,
                        track_interval=1,
-                       trade_cmd_expire_seconds=120000000,
+                       trade_cmd_expire_seconds=120,
                        cmd_cache=True,
                        slippage=0.01, )
 
@@ -30,7 +30,7 @@ def xqToThs():
                        initial_assets=None,
                        adjust_sell=True,
                        track_interval=1,
-                       trade_cmd_expire_seconds=120000000,
+                       trade_cmd_expire_seconds=120,
                        cmd_cache=True,
                        slippage=0.01, )
 
