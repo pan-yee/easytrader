@@ -15,13 +15,13 @@ def xq():
     userYh = yh()
     xq_follower.follow(userYh,
                        user.account_config.get("portfolio_code"),
-                       100000,
-                       None,
-                       False,
-                       1,
-                       1200000000,
-                       True,
-                       0.01)
+                       total_assets=100000,
+                       initial_assets=None,
+                       adjust_sell=True,
+                       track_interval=10,
+                       trade_cmd_expire_seconds=120000000,
+                       cmd_cache=True,
+                       slippage= 0.01,)
 
 
 def yh():
