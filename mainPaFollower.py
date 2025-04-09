@@ -1,15 +1,15 @@
 import easytrader
+from easytrader.utils.misc import file2dict
 
 
 def paToYh():
-    # print("获取资金状况:" + user.balance)
-    # print("获取持仓:" + user.position)
+    account = file2dict("pa.json")
     xq_follower = easytrader.follower('pa')
-    xq_follower.login(cookies="PA")
+    xq_follower.login(cookies=account["cookies"])
     # 创建银河用户并登陆
     userYh = yh()
     xq_follower.follow(userYh,
-                       "22608",
+                       account["portfolio_code"],
                        total_assets=100000,
                        initial_assets=None,
                        adjust_sell=True,

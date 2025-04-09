@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from numbers import Number
 from threading import Thread
+from unicodedata import decimal
 
 from easytrader.follower import BaseFollower
 from easytrader.log import logger
@@ -104,7 +105,7 @@ class PingAnFollower(BaseFollower):
                 strategies, total_assets, initial_assets
         ):
             assets = self.calculate_assets(
-                strategy_url, strategy_total_assets
+                strategy_total_assets, strategy_initial_assets
             )
             try:
                 strategy_id = self.extract_strategy_id(strategy_url)
@@ -137,13 +138,22 @@ class PingAnFollower(BaseFollower):
 
     def extract_strategy_name(self, strategy_url):
         base_url = "https://m.stock.pingan.com/portfoliofront/zuhe/queryProductInfo?_={}"
-        url = base_url.format(self.get_timestamp_ms())
-        rep = self.s.get(url)
-        info_index = 0
-        return rep.json()[info_index]["name"]
+        params = {"_": self.get_timestamp_ms}
+        jsonBody = {
+            "appName": "PA18",
+            "tokenId": "",
+            "cltplt": "h5",
+            "cltver": "1.0",
+            "body": {
+                "productNo": strategy_url,
+                "grayEnv": "B"
+            }
+        }
+        rep = self.s.post(base_url, params=params, json=jsonBody)
+        return rep.json()["data"]["product"]["productName"]
 
     def extract_transactions(self, history):
-        if history["data"]["totalrows"] <= 0:
+        if int(history["data"]["totalrows"]) <= 0:
             return []
         raw_transactions = history["data"]["datas"]
         transactions = []
@@ -182,14 +192,14 @@ class PingAnFollower(BaseFollower):
     # noinspection PyMethodOverriding
     def project_transactions(self, transactions, assets):
         for transaction in transactions:
-            weight_diff = self.none_to_zero(transaction["singleAfterPosition"]) - self.none_to_zero(
-                transaction["singleBeforePosition"]
-            )
+            weight_diff = float(self.none_to_zero(transaction["singleAfterPosition"])) - float(
+                self.none_to_zero(transaction["singleBeforePosition"]))
 
-            initial_amount = abs(weight_diff) / 100 * assets / transaction["exec_price"]
+            initial_amount = abs(weight_diff) / 100 * assets / float(transaction["exec_price"])
 
-            transaction["datetime"] = datetime.fromisoformat(
+            transaction["datetime"] = datetime.strptime(
                 (transaction["exec_date"] + " " + transaction["exec_time"])
+                , '%Y%m%d %H:%M:%S'
             )
 
             transaction["stock_code"] = transaction["stock_code"].lower()
