@@ -195,7 +195,7 @@ class PingAnFollower(BaseFollower):
             weight_diff = float(self.none_to_zero(transaction["singleAfterPosition"])) - float(
                 self.none_to_zero(transaction["singleBeforePosition"]))
 
-            initial_amount = abs(weight_diff) / 100 * assets / float(transaction["exec_price"])
+            initial_amount = abs(weight_diff)  * assets / float(transaction["exec_price"])
 
             transaction["datetime"] = datetime.strptime(
                 (transaction["exec_date"] + " " + transaction["exec_time"])
