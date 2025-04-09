@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
-import json
-import re
 import time
 from datetime import datetime
 from numbers import Number
 from threading import Thread
-from unicodedata import decimal
 
 from easytrader.follower import BaseFollower
 from easytrader.log import logger
