@@ -6,6 +6,7 @@ import six
 
 from easytrader.joinquant_follower import JoinQuantFollower
 from easytrader.log import logger
+from easytrader.pa_follower import PingAnFollower
 from easytrader.ricequant_follower import RiceQuantFollower
 from easytrader.xq_follower import XueQiuFollower
 from easytrader.xqtrader import XueQiuTrader
@@ -100,4 +101,6 @@ def follower(platform, **kwargs):
         return JoinQuantFollower()
     if platform.lower() in ["xq", "xueqiu", "雪球"]:
         return XueQiuFollower(**kwargs)
+    if platform.lower() in ["pa", "pingan", "平安"]:
+        return PingAnFollower(**kwargs)
     raise NotImplementedError

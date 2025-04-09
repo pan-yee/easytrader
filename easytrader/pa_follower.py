@@ -3,6 +3,7 @@ from __future__ import division, print_function, unicode_literals
 
 import json
 import re
+import time
 from datetime import datetime
 from numbers import Number
 from threading import Thread
@@ -13,11 +14,11 @@ from easytrader.utils.misc import parse_cookies_str
 
 
 class PingAnFollower(BaseFollower):
-    LOGIN_PAGE = "https://m.stock.pingan.com/invest/zuhe/detail.html?WT.mc_id=WX-xxts-tctx&productNo={}"
-    LOGIN_API = "https://m.stock.pingan.com/invest/chaogu/shipintougu/v2/checkToken?_={}"
-    TRANSACTION_API = "https://m.stock.pingan.com/portfoliofront/zuhedetail/getProductTransferHistory?_={}"
-    PORTFOLIO_URL = "https://xueqiu.com/p/"
-    WEB_REFERER = "https://m.stock.pingan.com/invest/zuhe/detail.html?WT.mc_id=WX-xxts-tctx&productNo={}"
+    LOGIN_PAGE = "https://m.stock.pingan.com/invest/zuhe/detail.html"
+    LOGIN_API = "https://m.stock.pingan.com/invest/chaogu/shipintougu/v2/checkToken"
+    TRANSACTION_API = "https://m.stock.pingan.com/portfoliofront/zuhedetail/getProductTransferHistory"
+    PORTFOLIO_URL = "https://m.stock.pingan.com/invest/zuhe/detail.html"
+    WEB_REFERER = "https://m.stock.pingan.com/invest/zuhe/detail.html?WT.mc_id=WX-xxts-tctx&productNo=22608"
 
     def __init__(self):
         super().__init__()
@@ -34,34 +35,33 @@ class PingAnFollower(BaseFollower):
         cookies = kwargs.get("cookies")
         if cookies is None:
             raise TypeError(
-                "雪球登陆需要设置 cookies， 具体见" "https://smalltool.github.io/2016/08/02/cookie/"
+                "PA登陆需要设置 cookies， 具体见" "https://smalltool.github.io/2016/08/02/cookie/"
             )
         headers = self._generate_headers()
         self.s.headers.update(headers)
-
-        self.s.get(self.LOGIN_PAGE)
-
         cookie_dict = parse_cookies_str(cookies)
         self.s.cookies.update(cookie_dict)
+
+        self.s.get(self.LOGIN_PAGE, params={"WT.mc_id": "WX-xxts-tctx", "productNo": "22608"})
 
         logger.info("登录成功")
 
     def follow(  # type: ignore
-        self,
-        users,
-        strategies,
-        total_assets=10000,
-        initial_assets=None,
-        adjust_sell=False,
-        track_interval=10,
-        trade_cmd_expire_seconds=120,
-        cmd_cache=True,
-        slippage: float = 0.0,
+            self,
+            users,
+            strategies,
+            total_assets=10000,
+            initial_assets=None,
+            adjust_sell=False,
+            track_interval=10,
+            trade_cmd_expire_seconds=120,
+            cmd_cache=True,
+            slippage: float = 0.0,
     ):
-        """跟踪 joinquant 对应的模拟交易，支持多用户多策略
+        """跟踪 PA 对应的模拟交易，支持多用户多策略
         :param users: 支持 easytrader 的用户对象，支持使用 [] 指定多个用户
-        :param strategies: 雪球组合名, 类似 ZH123450
-        :param total_assets: 雪球组合对应的总资产， 格式 [组合1对应资金, 组合2对应资金]
+        :param strategies: PA组合名, 类似 ZH123450
+        :param total_assets: PA组合对应的总资产， 格式 [组合1对应资金, 组合2对应资金]
             若 strategies=['ZH000001', 'ZH000002'],
                 设置 total_assets=[10000, 10000], 则表明每个组合对应的资产为 1w 元
             假设组合 ZH000001 加仓 价格为 p 股票 A 10%,
@@ -70,7 +70,7 @@ class PingAnFollower(BaseFollower):
             当卖出股票数大于实际持仓数时，调整为实际持仓数。目前仅在银河客户端测试通过。
             当 users 为多个时，根据第一个 user 的持仓数决定
         :type adjust_sell: bool
-        :param initial_assets: 雪球组合对应的初始资产,
+        :param initial_assets: PA组合对应的初始资产,
             格式 [ 组合1对应资金, 组合2对应资金 ]
             总资产由 初始资产 × 组合净值 算得， total_assets 会覆盖此参数
         :param track_interval: 轮训模拟交易时间，单位为秒
@@ -101,7 +101,7 @@ class PingAnFollower(BaseFollower):
         self.start_trader_thread(self._users, trade_cmd_expire_seconds)
 
         for strategy_url, strategy_total_assets, strategy_initial_assets in zip(
-            strategies, total_assets, initial_assets
+                strategies, total_assets, initial_assets
         ):
             assets = self.calculate_assets(
                 strategy_url, strategy_total_assets
@@ -137,27 +137,40 @@ class PingAnFollower(BaseFollower):
 
     def extract_strategy_name(self, strategy_url):
         base_url = "https://m.stock.pingan.com/portfoliofront/zuhe/queryProductInfo?_={}"
-        url = base_url.format(strategy_url,datetime.now())
+        url = base_url.format(self.get_timestamp_ms())
         rep = self.s.get(url)
         info_index = 0
         return rep.json()[info_index]["name"]
 
     def extract_transactions(self, history):
-        if history["count"] <= 0:
+        if history["data"]["totalrows"] <= 0:
             return []
-        rebalancing_index = 0
-        raw_transactions = history["list"][rebalancing_index]["rebalancing_histories"]
+        raw_transactions = history["data"]["datas"]
         transactions = []
         for transaction in raw_transactions:
-            if transaction["price"] is None:
+            if transaction["exec_price"] is None:
                 logger.info("该笔交易无法获取价格，疑似未成交，跳过。交易详情: %s", transaction)
                 continue
             transactions.append(transaction)
 
         return transactions
 
+    def query_strategy_transaction(self, strategy, **kwargs):
+        params = self.create_query_transaction_params(strategy)
+        jsonBody = {"appName": "PA18",
+                    "body": {"curPage": 1, "rowOfPage": 3, "productNo": strategy},
+                    "cltplt": "h5",
+                    "cltver": "1.0",
+                    "tokenId": ""}
+        rep = self.s.post(self.TRANSACTION_API, params=params, json=jsonBody)
+        history = rep.json()
+
+        transactions = self.extract_transactions(history)
+        self.project_transactions(transactions, **kwargs)
+        return self.order_transactions_sell_first(transactions)
+
     def create_query_transaction_params(self, strategy):
-        params = {"cube_symbol": strategy, "page": 1, "count": 1}
+        params = {"_": self.get_timestamp_ms}
         return params
 
     # noinspection PyMethodOverriding
@@ -169,17 +182,17 @@ class PingAnFollower(BaseFollower):
     # noinspection PyMethodOverriding
     def project_transactions(self, transactions, assets):
         for transaction in transactions:
-            weight_diff = self.none_to_zero(transaction["weight"]) - self.none_to_zero(
-                transaction["prev_weight"]
+            weight_diff = self.none_to_zero(transaction["singleAfterPosition"]) - self.none_to_zero(
+                transaction["singleBeforePosition"]
             )
 
-            initial_amount = abs(weight_diff) / 100 * assets / transaction["price"]
+            initial_amount = abs(weight_diff) / 100 * assets / transaction["exec_price"]
 
-            transaction["datetime"] = datetime.fromtimestamp(
-                transaction["created_at"] // 1000
+            transaction["datetime"] = datetime.fromisoformat(
+                (transaction["exec_date"] + " " + transaction["exec_time"])
             )
 
-            transaction["stock_code"] = transaction["stock_symbol"].lower()
+            transaction["stock_code"] = transaction["stock_code"].lower()
 
             transaction["action"] = "buy" if weight_diff > 0 else "sell"
 
@@ -226,3 +239,7 @@ class PingAnFollower(BaseFollower):
         )
         return adjust_amount
 
+    @staticmethod
+    def get_timestamp_ms():
+        """获取当前时间的毫秒级时间戳"""
+        return int(time.time() * 1000)

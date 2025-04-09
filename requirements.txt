@@ -15,8 +15,8 @@ jinja2==2.10
 lxml==4.2.3
 markupsafe==1.0
 numpy==1.15.0; python_version >= '2.7'
-pandas==0.23.3
-pillow==5.2.0
+pandas~=2.0.3
+pillow~=10.4.0
 pyperclip==1.6.4
 pyquery==1.4.0; python_version != '3.0.*'
 pytesseract==0.2.4
@@ -29,3 +29,8 @@ six==1.11.0
 urllib3==1.23; python_version != '3.1.*'
 werkzeug==0.14.1
 
+
+easytrader~=0.23.0
+pytest~=8.3.5
+setuptools~=75.3.2
+urllib3~=1.23
