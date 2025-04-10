@@ -158,6 +158,7 @@ class PingAnFollower(BaseFollower):
             if transaction["exec_price"] is None:
                 logger.info("该笔交易无法获取价格，疑似未成交，跳过。交易详情: %s", transaction)
                 continue
+            transaction["price"]= transaction["exec_price"]
             transactions.append(transaction)
 
         return transactions
