@@ -166,7 +166,7 @@ class PingAnFollower(BaseFollower):
     def query_strategy_transaction(self, strategy, **kwargs):
         params = self.create_query_transaction_params(strategy)
         jsonBody = {"appName": "PA18",
-                    "body": {"curPage": 1, "rowOfPage": 3, "productNo": strategy},
+                    "body": {"curPage": 1, "rowOfPage": 1, "productNo": strategy},
                     "cltplt": "h5",
                     "cltver": "1.0",
                     "tokenId": ""}
